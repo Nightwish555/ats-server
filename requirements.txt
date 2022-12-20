@@ -1,0 +1,7 @@
+fastapi
+six
+bunch
+loguru
+requests
+apkutils2>=1.0.0
+pydantic[dotenv]
