@@ -7,8 +7,8 @@ from typing import Any
 class AtsResponse(object):
 
     @staticmethod
-    def success(data=None, code=0, msg="操作成功"):
-        return dict(code=code, msg=msg, data=data)
+    def success(data=None, code=0, msg="操作成功", **kwargs):
+        return dict(code=code, msg=msg, data=data, **kwargs)
 
     @staticmethod
     def records(data: list, code=0, msg="操作成功"):
