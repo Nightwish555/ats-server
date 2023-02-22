@@ -9,20 +9,20 @@ from sqlalchemy.future import select
 from app.crud import Mapper, ModelWrapper, connect
 from app.crud.test_case.ConstructorDao import ConstructorDao
 from app.crud.test_case.TestCaseAssertsDao import TestCaseAssertsDao
-from app.crud.test_case.TestCaseDirectory import PityTestcaseDirectoryDao
-from app.crud.test_case.TestCaseOutParametersDao import PityTestCaseOutParametersDao
-from app.crud.test_case.TestcaseDataDao import PityTestcaseDataDao
+from app.crud.test_case.TestCaseDirectory import TestcaseDirectoryDao
+from app.crud.test_case.TestCaseOutParametersDao import TestCaseOutParametersDao
+from app.crud.test_case.TestcaseDataDao import TestcaseDataDao
 from app.enums.ConstructorEnum import ConstructorType
 from app.middleware.RedisManager import RedisHelper
 from app.models import async_session
 from app.models.constructor import Constructor
-from app.models.out_parameters import PityTestCaseOutParameters
+from app.models.out_parameters import TestCaseOutParameters
 from app.models.project import Project
 from app.models.test_case import TestCase
 from app.models.testcase_asserts import TestCaseAsserts
-from app.models.testcase_data import PityTestcaseData
+from app.models.testcase_data import TestcaseData
 from app.models.user import User
-from app.schema.testcase_out_parameters import PityTestCaseVariablesDto
+from app.schema.testcase_out_parameters import TestCaseVariablesDto
 from app.schema.testcase_schema import TestCaseForm, TestCaseInfo
 
 
@@ -33,7 +33,7 @@ class TestCaseDao(Mapper):
         try:
             filters = [TestCase.deleted_at == 0]
             if directory_id:
-                parents = await PityTestcaseDirectoryDao.get_directory_son(directory_id)
+                parents = await TestcaseDirectoryDao.get_directory_son(directory_id)
                 filters = [TestCase.deleted_at == 0, TestCase.directory_id.in_(parents)]
                 if name:
                     filters.append(TestCase.name.like(f"%{name}%"))
@@ -108,8 +108,8 @@ class TestCaseDao(Mapper):
         session.expunge(cs)
         await TestCaseDao._insert(session, cs.id, user_id, data, constructor=(ConstructorDao, Constructor),
                                   asserts=(TestCaseAssertsDao, TestCaseAsserts),
-                                  out_parameters=(PityTestCaseOutParametersDao, PityTestCaseOutParameters),
-                                  data=(PityTestcaseDataDao, PityTestcaseData))
+                                  out_parameters=(TestCaseOutParametersDao, TestCaseOutParameters),
+                                  data=(TestcaseDataDao, TestcaseData))
         return cs
 
     @classmethod
@@ -151,9 +151,9 @@ class TestCaseDao(Mapper):
                 # 获取数据构造器
                 constructors = await ConstructorDao.list_constructor(case_id)
                 constructors_case = await TestCaseDao.query_test_case_by_constructors(constructors)
-                test_data = await PityTestcaseDataDao.list_testcase_data(case_id)
-                parameters = await PityTestCaseOutParametersDao.select_list(case_id=case_id,
-                                                                            _sort=(asc(PityTestCaseOutParameters.id),))
+                test_data = await TestcaseDataDao.list_testcase_data(case_id)
+                parameters = await TestCaseOutParametersDao.select_list(case_id=case_id,
+                                                                            _sort=(asc(TestCaseOutParameters.id),))
                 return dict(asserts=asserts, constructors=constructors, case=data, constructors_case=constructors_case,
                             test_data=test_data, out_parameters=parameters)
         except Exception as e:
@@ -175,7 +175,7 @@ class TestCaseDao(Mapper):
             raise Exception(f"查询用例失败: {str(e)}")
 
     @staticmethod
-    async def query_test_case_out_parameters(session, case_list: List[PityTestCaseVariablesDto], case_set=None,
+    async def query_test_case_out_parameters(session, case_list: List[TestCaseVariablesDto], case_set=None,
                                              var_list=None):
         """
         根据前置场景id获取对应的参数
@@ -195,8 +195,8 @@ class TestCaseDao(Mapper):
         step_case = list()
         name_dict = {c.case_id: c.step_name for c in case_list}
         # 获取用例的前后置步骤和出参
-        out = select(PityTestCaseOutParameters).where(PityTestCaseOutParameters.case_id.in_(cs_list),
-                                                      PityTestCaseOutParameters.deleted_at == 0)
+        out = select(TestCaseOutParameters).where(TestCaseOutParameters.case_id.in_(cs_list),
+                                                      TestCaseOutParameters.deleted_at == 0)
         parameters = await session.execute(out)
         for p in parameters.scalars().all():
             var_list.append(dict(stepName=name_dict[p.case_id], name="${%s}" % p.name))
@@ -213,7 +213,7 @@ class TestCaseDao(Mapper):
                     continue
                 if case_id in case_set:
                     raise Exception("场景存在循环依赖")
-                step_case.append(PityTestCaseVariablesDto(case_id=case_id, step_name=s.name))
+                step_case.append(TestCaseVariablesDto(case_id=case_id, step_name=s.name))
         await TestCaseDao.query_test_case_out_parameters(session, step_case, case_set, var_list)
 
     @staticmethod

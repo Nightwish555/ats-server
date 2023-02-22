@@ -2,15 +2,15 @@ from datetime import datetime
 
 from sqlalchemy import Column, INT, String, UniqueConstraint
 
-from app.models.basic import PityBase
-from app.schema.testcase_directory import PityTestcaseDirectoryForm
+from app.models.basic import Basic
+from app.schema.testcase_directory import TestcaseDirectoryForm
 
 
-class PityTestcaseDirectory(PityBase):
+class TestcaseDirectory(Basic):
     """
     用例目录表
     """
-    __tablename__ = 'pity_testcase_directory'
+    __tablename__ = 'ats_testcase_directory'
     # 联合索引，防止同一层次出现同名目录
     __table_args__ = (
         UniqueConstraint('project_id', 'name', 'parent', 'deleted_at'),
@@ -24,7 +24,7 @@ class PityTestcaseDirectory(PityBase):
     # 目录上级目录，如果没有则为None
     parent = Column(INT)
 
-    def __init__(self, form: PityTestcaseDirectoryForm, user):
+    def __init__(self, form: TestcaseDirectoryForm, user):
         super().__init__(user)
         self.project_id = form.project_id
         self.name = form.name

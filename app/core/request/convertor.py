@@ -1,4 +1,4 @@
-__author__ = "woody"
+
 
 from typing import List
 

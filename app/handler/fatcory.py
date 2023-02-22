@@ -9,7 +9,7 @@ from starlette.responses import FileResponse
 from app.handler.encoder import jsonable_encoder
 
 
-class PityResponse(object):
+class AtsResponse:
 
     @staticmethod
     def model_to_dict(obj, *ignore: str):
@@ -31,11 +31,11 @@ class PityResponse(object):
     def dict_model_to_dict(obj):
         for k, v in obj.items():
             if isinstance(v, dict):
-                PityResponse.dict_model_to_dict(v)
+                AtsResponse.dict_model_to_dict(v)
             elif isinstance(v, list):
-                obj[k] = PityResponse.model_to_list(v)
+                obj[k] = AtsResponse.model_to_list(v)
             else:
-                obj[k] = PityResponse.model_to_dict(v)
+                obj[k] = AtsResponse.model_to_dict(v)
         return obj
 
     @staticmethod
@@ -59,11 +59,11 @@ class PityResponse(object):
         columns = []
         if len(data) > 0:
             columns = list(data[0].keys())
-        return columns, [PityResponse.json_serialize(obj) for obj in data]
+        return columns, [AtsResponse.json_serialize(obj) for obj in data]
 
     @staticmethod
     def model_to_list(data: list, *ignore: str):
-        return [PityResponse.model_to_dict(x, *ignore) for x in data]
+        return [AtsResponse.model_to_dict(x, *ignore) for x in data]
 
     @staticmethod
     def encode_json(data: Any, *exclude: str):
@@ -73,17 +73,17 @@ class PityResponse(object):
 
     @staticmethod
     def success(data=None, code=0, msg="操作成功", exclude=()):
-        return PityResponse.encode_json(dict(code=code, msg=msg, data=data), *exclude)
+        return AtsResponse.encode_json(dict(code=code, msg=msg, data=data), *exclude)
 
     @staticmethod
     def records(data: list, code=0, msg="操作成功"):
-        return dict(code=code, msg=msg, data=PityResponse.model_to_list(data))
+        return dict(code=code, msg=msg, data=AtsResponse.model_to_list(data))
 
     @staticmethod
     def success_with_size(data=None, code=0, msg="操作成功", total=0):
         if data is None:
-            return PityResponse.encode_json(dict(code=code, msg=msg, data=list(), total=0))
-        return PityResponse.encode_json(dict(code=code, msg=msg, data=data, total=total))
+            return AtsResponse.encode_json(dict(code=code, msg=msg, data=list(), total=0))
+        return AtsResponse.encode_json(dict(code=code, msg=msg, data=data, total=total))
 
     @staticmethod
     def failed(msg, code=110, data=None):

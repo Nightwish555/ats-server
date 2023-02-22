@@ -2,7 +2,7 @@ import json
 import os
 
 from app.middleware.RedisManager import RedisHelper
-from config import Config, PITY_ENV, ROOT
+from config import Config, ATS_ENV, ROOT
 
 
 class SystemConfiguration(object):
@@ -12,7 +12,7 @@ class SystemConfiguration(object):
 
     @staticmethod
     def config_filename():
-        if PITY_ENV and PITY_ENV.lower() == "pro":
+        if ATS_ENV and ATS_ENV.lower() == "pro":
             return "configuration_pro.json"
         return "configuration_dev.json"
 

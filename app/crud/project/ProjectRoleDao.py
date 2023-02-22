@@ -10,7 +10,7 @@ from app.exception.error import AuthError
 from app.models import async_session
 from app.models.project import Project
 from app.models.project_role import ProjectRole
-from app.routers.project.project_schema import ProjectRoleEditForm
+from app.schema.project import ProjectRoleEditForm
 from config import Config
 
 

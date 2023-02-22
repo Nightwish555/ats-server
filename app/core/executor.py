@@ -9,34 +9,32 @@ from typing import List, Any
 from app.core.constructor.case_constructor import TestcaseConstructor
 from app.core.constructor.http_constructor import HttpConstructor
 from app.core.constructor.python_constructor import PythonConstructor
-from app.core.constructor.redis_constructor import RedisConstructor
 from app.core.constructor.sql_constructor import SqlConstructor
 from app.core.msg.dingtalk import DingTalk
 from app.core.msg.mail import Email
 from app.core.paramters import parameters_parser
 from app.core.ws_connection_manager import ws_manage
 from app.crud.auth.UserDao import UserDao
-from app.crud.config.AddressDao import PityGatewayDao
 from app.crud.config.EnvironmentDao import EnvironmentDao
 from app.crud.config.GConfigDao import GConfigDao
 from app.crud.project.ProjectDao import ProjectDao
 from app.crud.test_case.TestCaseAssertsDao import TestCaseAssertsDao
 from app.crud.test_case.TestCaseDao import TestCaseDao
-from app.crud.test_case.TestCaseOutParametersDao import PityTestCaseOutParametersDao
-from app.crud.test_case.TestPlan import PityTestPlanDao
+from app.crud.test_case.TestCaseOutParametersDao import TestCaseOutParametersDao
+from app.crud.test_case.TestPlan import TestPlanDao
 from app.crud.test_case.TestReport import TestReportDao
 from app.crud.test_case.TestResult import TestResultDao
-from app.crud.test_case.TestcaseDataDao import PityTestcaseDataDao
+from app.crud.test_case.TestcaseDataDao import TestcaseDataDao
 from app.enums.ConstructorEnum import ConstructorType
 from app.enums.GconfigEnum import GConfigParserEnum, GconfigType
 from app.enums.NoticeEnum import NoticeType
 from app.enums.RequestBodyEnum import BodyType
 from app.middleware.AsyncHttpClient import AsyncRequest
 from app.models.constructor import Constructor
-from app.models.out_parameters import PityTestCaseOutParameters
+from app.models.out_parameters import TestCaseOutParameters
 from app.models.project import Project
 from app.models.test_case import TestCase
-from app.models.test_plan import PityTestPlan
+from app.models.test_plan import TestPlan
 from app.models.testcase_asserts import TestCaseAsserts
 from app.utils.case_logger import CaseLog
 from app.utils.decorator import case_log, lock
@@ -46,7 +44,7 @@ from app.utils.logger import Log
 from config import Config
 
 
-class Executor(object):
+class Executor:
     log = Log("Executor")
     el_exp = r"\$\{(.+?)\}"
     pattern = re.compile(el_exp)
@@ -71,8 +69,6 @@ class Executor(object):
             return TestcaseConstructor
         if c.type == ConstructorType.sql:
             return SqlConstructor
-        if c.type == ConstructorType.redis:
-            return RedisConstructor
         if c.type == ConstructorType.py_script:
             return PythonConstructor
         if c.type == ConstructorType.http:
@@ -260,7 +256,7 @@ class Executor(object):
                 headers['Content-Type'] = "application/json; charset=UTF-8"
 
     @case_log
-    def extract_out_parameters(self, response_info, data: List[PityTestCaseOutParameters]):
+    def extract_out_parameters(self, response_info, data: List[TestCaseOutParameters]):
         """提取出参数据"""
         result = dict()
         for d in data:
@@ -308,7 +304,7 @@ class Executor(object):
             asserts = await TestCaseAssertsDao.async_list_test_case_asserts(case_id)
 
             # 获取出参信息
-            out_parameters = await PityTestCaseOutParametersDao.select_list(case_id=case_id)
+            out_parameters = await TestCaseOutParametersDao.select_list(case_id=case_id)
 
             for ast in asserts:
                 await self.parse_gconfig(ast, GconfigType.asserts, env, "expected", "actually")
@@ -331,11 +327,6 @@ class Executor(object):
 
             # Step8: 替换请求参数
             body = self.replace_body(request_param, body, case_info.body_type)
-
-            # Step9: 替换base_path
-            if case_info.base_path:
-                base_path = await PityGatewayDao.query_gateway(env, case_info.base_path)
-                case_info.url = f"{base_path}{case_info.url}"
 
             response_info["url"] = case_info.url
 
@@ -456,7 +447,7 @@ class Executor(object):
 
     @staticmethod
     async def run_single(env: int, data, report_id, case_id, params_pool: dict = None, path="主case", retry_minutes=0):
-        test_data = await PityTestcaseDataDao.list_testcase_data_by_env(env, case_id)
+        test_data = await TestcaseDataDao.list_testcase_data_by_env(env, case_id)
         if not test_data:
             await Executor.run_with_test_data(env, data, report_id, case_id, params_pool, dict(), path,
                                               "默认数据", retry_minutes=retry_minutes)
@@ -654,7 +645,7 @@ class Executor(object):
         return json.dumps(result, ensure_ascii=False)
 
     @staticmethod
-    async def notice(env: list, plan: PityTestPlan, project: Project, report_dict: dict, users: list):
+    async def notice(env: list, plan: TestPlan, project: Project, report_dict: dict, users: list):
         """
         消息通知方法
         :param env:
@@ -684,7 +675,7 @@ class Executor(object):
                             Executor.log.debug("项目未配置钉钉通知机器人")
                             continue
                         ding = DingTalk(project.dingtalk_url)
-                        await ding.send_msg("pity测试报告", render_markdown, None, users,
+                        await ding.send_msg("ats测试报告", render_markdown, None, users,
                                             link=report_dict[e]['report_url'])
 
     @staticmethod
@@ -696,13 +687,13 @@ class Executor(object):
         :param executor:
         :return:
         """
-        plan = await PityTestPlanDao.query_test_plan(plan_id)
+        plan = await TestPlanDao.query_test_plan(plan_id)
         if plan is None:
             Executor.log.debug(f"测试计划: [{plan_id}]不存在")
             return
         try:
             # 设置为running
-            await PityTestPlanDao.update_test_plan_state(plan.id, 1)
+            await TestPlanDao.update_test_plan_state(plan.id, 1)
             project, _ = await ProjectDao.query_project(plan.project_id)
             env = list(map(int, plan.env.split(",")))
             case_list = list(map(int, plan.case_list.split(",")))
@@ -712,7 +703,7 @@ class Executor(object):
             await asyncio.gather(
                 *(Executor.run_multiple(executor, int(e), case_list, mode=1, retry_minutes=plan.retry_minutes,
                                         plan_id=plan.id, ordered=plan.ordered, report_dict=report_dict) for e in env))
-            await PityTestPlanDao.update_test_plan_state(plan.id, 0)
+            await TestPlanDao.update_test_plan_state(plan.id, 0)
             users = await UserDao.list_user_touch(*receiver)
             await Executor.notice(env, plan, project, report_dict, users)
             if executor != 0:
@@ -731,7 +722,7 @@ class Executor(object):
                 user = await UserDao.query_user(executor)
                 name = user.name if user is not None else "未知"
             else:
-                name = "pity机器人"
+                name = "ats机器人"
             st = time.perf_counter()
             # step1: 新增测试报告数据
             report_id = await TestReportDao.start(executor, env, mode, plan_id=plan_id)

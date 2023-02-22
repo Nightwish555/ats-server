@@ -9,7 +9,7 @@ from app.middleware.oss import OssClient
 from config import Config
 
 
-class AsyncRequest(object):
+class AsyncRequest:
 
     def __init__(self, url: str, timeout=15, **kwargs):
         self.url = url

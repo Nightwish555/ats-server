@@ -7,12 +7,12 @@ from sqlalchemy import select, update
 from app.crud import Mapper, ModelWrapper
 from app.middleware.RedisManager import RedisHelper
 from app.models import async_session
-from app.models.out_parameters import PityTestCaseOutParameters
-from app.schema.testcase_out_parameters import PityTestCaseOutParametersForm
+from app.models.out_parameters import TestCaseOutParameters
+from app.schema.testcase_out_parameters import TestCaseOutParametersForm
 
 
-@ModelWrapper(PityTestCaseOutParameters)
-class PityTestCaseOutParametersDao(Mapper):
+@ModelWrapper(TestCaseOutParameters)
+class TestCaseOutParametersDao(Mapper):
 
     @classmethod
     async def should_remove(cls, before, after):
@@ -33,30 +33,30 @@ class PityTestCaseOutParametersDao(Mapper):
 
     @classmethod
     @RedisHelper.up_cache("dao")
-    async def update_many(cls, case_id: int, data: List[PityTestCaseOutParametersForm], user_id: int):
+    async def update_many(cls, case_id: int, data: List[TestCaseOutParametersForm], user_id: int):
         result = []
         try:
             async with async_session() as session:
                 async with session.begin():
-                    source = await session.execute(select(PityTestCaseOutParameters).where(
-                        PityTestCaseOutParameters.case_id == case_id,
-                        PityTestCaseOutParameters.deleted_at == 0,
+                    source = await session.execute(select(TestCaseOutParameters).where(
+                        TestCaseOutParameters.case_id == case_id,
+                        TestCaseOutParameters.deleted_at == 0,
                     ))
                     before = source.scalars().all()
                     should_remove = await cls.should_remove(before, data)
                     for item in data:
                         if item.id is None:
                             # add
-                            temp = PityTestCaseOutParameters(**item.dict(), case_id=case_id, user_id=user_id)
+                            temp = TestCaseOutParameters(**item.dict(), case_id=case_id, user_id=user_id)
                             session.add(temp)
                         else:
-                            query = await session.execute(select(PityTestCaseOutParameters).where(
-                                PityTestCaseOutParameters.id == item.id,
+                            query = await session.execute(select(TestCaseOutParameters).where(
+                                TestCaseOutParameters.id == item.id,
                             ))
                             temp = query.scalars().first()
                             if temp is None:
                                 # 走新增逻辑
-                                temp = PityTestCaseOutParameters(**item.dict(), case_id=case_id, user_id=user_id)
+                                temp = TestCaseOutParameters(**item.dict(), case_id=case_id, user_id=user_id)
                                 session.add(temp)
                             else:
                                 temp.name = item.name
@@ -71,8 +71,8 @@ class PityTestCaseOutParametersDao(Mapper):
                         result.append(temp)
                     if should_remove:
                         await session.execute(
-                            update(PityTestCaseOutParameters).where(
-                                PityTestCaseOutParameters.id.in_(should_remove)).values(
+                            update(TestCaseOutParameters).where(
+                                TestCaseOutParameters.id.in_(should_remove)).values(
                                 deleted_at=int(time.time() * 1000)))
             return result
         except Exception as e:

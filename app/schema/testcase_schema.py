@@ -3,11 +3,11 @@ from typing import List
 from pydantic import BaseModel, validator
 
 from app.exception.error import ParamsError
-from app.schema.base import PityModel
+from app.schema.base import AtsModel
 from app.schema.constructor import ConstructorForm
 from app.schema.request import RequestInfo
-from app.schema.testcase_data import PityTestcaseDataForm
-from app.schema.testcase_out_parameters import PityTestCaseOutParametersForm
+from app.schema.testcase_data import TestcaseDataForm
+from app.schema.testcase_out_parameters import TestCaseOutParametersForm
 
 
 class ListTestCaseForm(BaseModel):
@@ -33,7 +33,7 @@ class TestCaseForm(BaseModel):
     request_headers: str = None
     request_method: str = None
     status: int
-    out_parameters: List[PityTestCaseOutParametersForm] = []
+    out_parameters: List[TestCaseOutParametersForm] = []
     directory_id: int
     request_type: int
 
@@ -54,19 +54,19 @@ class TestCaseAssertsForm(BaseModel):
 
     @validator("name", "assert_type", "expected", "actually")
     def name_not_empty(cls, v):
-        return PityModel.not_empty(v)
+        return AtsModel.not_empty(v)
 
 
 class TestCaseInfo(BaseModel):
     case: TestCaseForm = None
     asserts: List[TestCaseAssertsForm] = []
-    data: List[PityTestcaseDataForm] = []
+    data: List[TestcaseDataForm] = []
     constructor: List[ConstructorForm] = []
-    out_parameters: List[PityTestCaseOutParametersForm] = []
+    out_parameters: List[TestCaseOutParametersForm] = []
 
     @validator("case")
     def name_not_empty(cls, v):
-        return PityModel.not_empty(v)
+        return AtsModel.not_empty(v)
 
 
 class TestCaseGeneratorForm(BaseModel):

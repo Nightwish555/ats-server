@@ -1,15 +1,15 @@
 import hashlib
-from datetime import timedelta, datetime
-
 import jwt
+
+from datetime import timedelta, datetime
 from jwt.exceptions import ExpiredSignatureError
 
 EXPIRED_HOUR = 72
 
 
-class UserToken(object):
-    key = 'pityToken'
-    salt = 'pity'
+class UserToken:
+    key = 'atsToken'
+    salt = 'ats'
 
     @staticmethod
     def get_token(data):

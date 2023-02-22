@@ -5,7 +5,7 @@ from typing import Any
 from app.exception.error import CaseParametersError
 
 
-class Parser(object):
+class Parser:
 
     @staticmethod
     def parse(source: dict, expression: str = "", **kwargs) -> Any:

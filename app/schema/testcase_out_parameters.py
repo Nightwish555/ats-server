@@ -16,10 +16,10 @@ class TestCaseOutParametersForm(BaseModel):
         return AtsModel.not_empty(v)
 
 
-class PityTestCaseParametersDto(TestCaseOutParametersForm):
+class TestCaseParametersDto(TestCaseOutParametersForm):
     case_id: int = None
 
 
-class PityTestCaseVariablesDto(BaseModel):
+class TestCaseVariablesDto(BaseModel):
     case_id: int
     step_name: str

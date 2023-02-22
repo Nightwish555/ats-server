@@ -1,10 +1,10 @@
 from fastapi import APIRouter, File, Depends, UploadFile
 
 from app.crud.auth.UserDao import UserDao
-from app.crud.oss.PityOssDao import PityOssDao
-from app.handler.fatcory import PityResponse
+from app.crud.oss.OssDao import OssDao
+from app.handler.fatcory import AtsResponse
 from app.middleware.oss import OssClient
-from app.models.oss_file import PityOssFile
+from app.models.oss_file import OssFile
 from app.routers import Permission, get_session
 from config import Config
 
@@ -21,19 +21,19 @@ async def create_oss_file(filepath: str, file: UploadFile = File(...),
         # oss上传 WARNING: 可能存在数据不同步的问题，oss成功本地失败
         file_url, file_size = await client.create_file(filepath, file_content)
         # 本地数据也要备份一份
-        model = PityOssFile(user_info['id'], filepath, file_url, PityOssFile.get_size(file_size))
-        record = await PityOssDao.query_record(file_path=filepath,
+        model = OssFile(user_info['id'], filepath, file_url, OssFile.get_size(file_size))
+        record = await OssDao.query_record(file_path=filepath,
                                                deleted_at=0)
         if record is not None:
             record.file_path = filepath
             record.view_url = file_url
             record.file_size = file_size
-            await PityOssDao.update_record_by_id(user_info['id'], record)
+            await OssDao.update_record_by_id(user_info['id'], record)
         else:
-            await PityOssDao.insert(model=model, log=True)
-        return PityResponse.success()
+            await OssDao.insert(model=model, log=True)
+        return AtsResponse.success()
     except Exception as e:
-        return PityResponse.failed(f"上传失败: {e}")
+        return AtsResponse.failed(f"上传失败: {e}")
 
 
 @router.post("/avatar", summary="上传用户头像")
@@ -45,33 +45,33 @@ async def upload_avatar(file: UploadFile = File(...), user_info=Depends(Permissi
         client = OssClient.get_oss_client()
         file_url, _ = await client.create_file(filepath, file_content, base_path="avatar")
         await UserDao.update_avatar(user_info['id'], file_url)
-        return PityResponse.success(file_url)
+        return AtsResponse.success(file_url)
     except Exception as e:
-        return PityResponse.failed(f"上传头像失败: {e}")
+        return AtsResponse.failed(f"上传头像失败: {e}")
 
 
 @router.get("/list")
 async def list_oss_file(filepath: str = '', _=Depends(Permission(Config.MEMBER))):
     try:
-        records = await PityOssDao.select_list(condition=[PityOssFile.file_path.like(f'%{filepath}%')])
-        return PityResponse.records(records)
+        records = await OssDao.select_list(condition=[OssFile.file_path.like(f'%{filepath}%')])
+        return AtsResponse.records(records)
     except Exception as e:
-        return PityResponse.failed(f"获取失败: {e}")
+        return AtsResponse.failed(f"获取失败: {e}")
 
 
 @router.get("/delete")
 async def delete_oss_file(filepath: str, user_info=Depends(Permission(Config.MANAGER)), session=Depends(get_session)):
     try:
         # 先获取到本地的记录，拿到sha值
-        record = await PityOssDao.query_record(file_path=filepath, deleted_at=0)
+        record = await OssDao.query_record(file_path=filepath, deleted_at=0)
         if record is None:
             raise Exception("文件不存在或已被删除")
-        await PityOssDao.delete_record_by_id(session, user_info["id"], record.id, log=True)
+        await OssDao.delete_record_by_id(session, user_info["id"], record.id, log=True)
         client = OssClient.get_oss_client()
         await client.delete_file(filepath)
-        return PityResponse.success()
+        return AtsResponse.success()
     except Exception as e:
-        return PityResponse.failed(f"删除失败: {e}")
+        return AtsResponse.failed(f"删除失败: {e}")
 
 
 # @router.post("/update")
@@ -87,9 +87,9 @@ async def delete_oss_file(filepath: str, user_info=Depends(Permission(Config.MAN
 #         client = OssClient.get_oss_client()
 #         file_content = await file.read()
 #         await client.update_file(filepath, file_content)
-#         return PityResponse.success()
+#         return AtsResponse.success()
 #     except Exception as e:
-#         return PityResponse.failed(f"修改失败: {e}")
+#         return AtsResponse.failed(f"修改失败: {e}")
 
 
 @router.get("/download")
@@ -103,6 +103,6 @@ async def download_oss_file(filepath: str):
         client = OssClient.get_oss_client()
         # 切割获取文件名
         path, filename = await client.download_file(filepath)
-        return PityResponse.file(path, filename)
+        return AtsResponse.file(path, filename)
     except Exception as e:
-        return PityResponse.failed(f"下载失败: {e}")
+        return AtsResponse.failed(f"下载失败: {e}")

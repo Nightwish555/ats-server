@@ -9,7 +9,7 @@ from app.models import Base
 from config import Config
 
 
-class AtsBase(Base):
+class Basic(Base):
     id = Column(INT, primary_key=True)
     created_at = Column(TIMESTAMP, nullable=False)
     updated_at = Column(TIMESTAMP, nullable=False)

@@ -5,8 +5,8 @@ from sqlalchemy import select, desc
 from app.crud import Mapper
 from app.crud.test_case.TestResult import TestResultDao
 from app.models import async_session
-from app.models.report import PityReport
-from app.models.test_plan import PityTestPlan
+from app.models.report import TestReport
+from app.models.test_plan import TestPlan
 from app.utils.logger import Log
 
 
@@ -22,7 +22,7 @@ class TestReportDao(Mapper):
         try:
             async with async_session() as session:
                 async with session.begin():
-                    report = PityReport(executor, env, mode=mode, plan_id=plan_id)
+                    report = TestReport(executor, env, mode=mode, plan_id=plan_id)
                     session.add(report)
                     await session.flush()
                     return report.id
@@ -35,7 +35,7 @@ class TestReportDao(Mapper):
         try:
             async with async_session() as session:
                 async with session.begin():
-                    sql = select(PityReport).where(PityReport.id == report_id)
+                    sql = select(TestReport).where(TestReport.id == report_id)
                     data = await session.execute(sql)
                     report = data.scalars().first()
                     if report is None:
@@ -48,11 +48,11 @@ class TestReportDao(Mapper):
 
     @staticmethod
     async def end(report_id: int, success_count: int, failed_count: int,
-                  error_count: int, skipped_count: int, status: int, cost: str) -> PityReport:
+                  error_count: int, skipped_count: int, status: int, cost: str) -> TestReport:
         try:
             async with async_session() as session:
                 async with session.begin():
-                    sql = select(PityReport).where(PityReport.id == report_id)
+                    sql = select(TestReport).where(TestReport.id == report_id)
                     data = await session.execute(sql)
                     report = data.scalars().first()
                     if report is None:
@@ -80,9 +80,9 @@ class TestReportDao(Mapper):
         """
         try:
             async with async_session() as session:
-                sql = select(PityReport, PityTestPlan.name).outerjoin(PityTestPlan,
-                                                                      PityTestPlan.id == PityReport.plan_id
-                                                                      ).where(PityReport.id == report_id)
+                sql = select(TestReport, TestPlan.name).outerjoin(TestPlan,
+                                                                  TestPlan.id == TestReport.plan_id
+                                                                  ).where(TestReport.id == report_id)
                 data = await session.execute(sql)
                 if data is None:
                     raise Exception("报告不存在")
@@ -106,11 +106,11 @@ class TestReportDao(Mapper):
         """
         try:
             async with async_session() as session:
-                sql = select(PityReport).where(PityReport.start_at.between(start_time, end_time)).order_by(
-                    desc(PityReport.start_at))
+                sql = select(TestReport).where(TestReport.start_at.between(start_time, end_time)).order_by(
+                    desc(TestReport.start_at))
                 if executor is not None:
                     executor = executor if executor != "CPU" else 0
-                    sql = sql.where(PityReport.executor == executor)
+                    sql = sql.where(TestReport.executor == executor)
                 data = await session.execute(sql)
                 total = data.raw.rowcount
                 if total == 0:

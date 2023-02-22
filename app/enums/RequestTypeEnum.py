@@ -6,3 +6,5 @@ class RequestType(IntEnum):
     grpc = 2
     dubbo = 3
     websocket = 4
+    tcp = 5
+    udp = 5

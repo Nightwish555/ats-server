@@ -1,4 +1,4 @@
-__author__ = "cyc"
+
 
 import json
 from typing import TypeVar

@@ -3,5 +3,5 @@ from app.models.oss_file import OssFile
 
 
 @ModelWrapper(OssFile)
-class PityOssDao(Mapper):
+class OssDao(Mapper):
     pass

@@ -1,5 +1,3 @@
-__author__ = "woody"
-
 import json
 from collections import defaultdict
 from json import JSONDecodeError

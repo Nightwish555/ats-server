@@ -7,13 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud import connect, Mapper
 from app.middleware.RedisManager import RedisHelper
 from app.models.project import Project
-from app.models.report import PityReport
+from app.models.report import TestReport
 from app.models.test_case import TestCase
-from app.models.test_plan import PityTestPlan
+from app.models.test_plan import TestPlan
 from app.models.user import User
 
 
-class Item(object):
+class Item:
     def __init__(self, name, model):
         self.name = name
         self.model = model
@@ -26,7 +26,7 @@ class DashboardDao(Mapper):
     async def get_statistics_data(cls, start: datetime, end: datetime, session: AsyncSession = None):
         return await cls.get_model_statistic_data(start, end, session, Item("project", Project),
                                                   Item("testcase", TestCase),
-                                                  Item("testplan", PityTestPlan),
+                                                  Item("testplan", TestPlan),
                                                   Item("user", User))
 
     @classmethod
@@ -34,7 +34,7 @@ class DashboardDao(Mapper):
     @connect
     async def get_report_statistics(cls, start: datetime, end: datetime, session: AsyncSession = None):
         result, idx = await cls.get_date_data(start, end)
-        sql = cls.create_sql(PityReport, start, end, field="start_at")
+        sql = cls.create_sql(TestReport, start, end, field="start_at")
         data = await session.execute(sql)
         count, success, failed, skip, error, total, total_pass = 0, 0, 0, 0, 0, 0, 0
         for item in data.scalars().all():

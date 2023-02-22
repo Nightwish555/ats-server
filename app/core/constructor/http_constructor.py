@@ -1,7 +1,6 @@
 import json
 
 from app.core.constructor.constructor import ConstructorAbstract
-from app.crud.config.AddressDao import PityGatewayDao
 from app.middleware.AsyncHttpClient import AsyncRequest
 from app.models.constructor import Constructor
 
@@ -14,9 +13,6 @@ class HttpConstructor(ConstructorAbstract):
             executor.append(f"当前路径: {path}, 第{index + 1}条{HttpConstructor.get_name(constructor)}")
             data = json.loads(constructor.constructor_json)
             url = data.get("url")
-            if data.get("base_path"):
-                base_path = await PityGatewayDao.query_gateway(env, data.get("base_path"))
-                url = f"{base_path}{url}"
             headers = data.get("headers")
             if isinstance(headers, str):
                 headers = json.loads(data.get("headers"))

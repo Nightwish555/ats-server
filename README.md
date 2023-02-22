@@ -1,9 +1,11 @@
 # ats-server
-atx2 学习，按照本人理解把atx2重写一遍
+接口测试后台
+目前支持http
+未来会支持 tcp、websocket
+
 
 ## 开发计划
-12.26
-rethinkdb 更换 mysql 
-预计27 开始 2-3天完成
+2023/02？10
+
 
 

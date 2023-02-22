@@ -2,8 +2,8 @@ import random
 import time
 
 
-class OssFile(object):
-    _base_path = "pity"
+class OssFile:
+    _base_path = "ats"
 
     async def create_file(self, filepath: str, content, base_path: str = None) -> (str, int):
         raise NotImplementedError
@@ -28,6 +28,6 @@ class OssFile(object):
 
     @staticmethod
     def get_random_filename(filename):
-        random_str = list("pity")
+        random_str = list("ats")
         random.shuffle(random_str)
         return f"{time.time_ns()}_{''.join(random_str)}_{filename}"

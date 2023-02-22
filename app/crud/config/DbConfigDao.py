@@ -7,11 +7,11 @@ from sqlalchemy.exc import ResourceClosedError
 from app.crud import Mapper, ModelWrapper
 from app.crud.config.EnvironmentDao import EnvironmentDao
 from app.handler.encoder import JsonEncoder
-from app.handler.fatcory import PityResponse
+from app.handler.fatcory import AtsResponse
 from app.middleware.RedisManager import RedisHelper
 from app.models import async_session, db_helper
-from app.models.database import PityDatabase
-from app.models.sql_log import PitySQLHistory
+from app.models.database import Database
+from app.models.sql_log import SQLHistory
 from app.schema.database import DatabaseForm
 from app.utils.logger import Log
 
@@ -30,14 +30,14 @@ class DbConfigDao(Mapper):
         """
         try:
             async with async_session() as session:
-                query = [PityDatabase.deleted_at == 0]
+                query = [Database.deleted_at == 0]
                 if name:
-                    query.append(PityDatabase.name.like(f'%{name}%'))
+                    query.append(Database.name.like(f'%{name}%'))
                 if database:
-                    query.append(PityDatabase.database.like(f"%{database}%"))
+                    query.append(Database.database.like(f"%{database}%"))
                 if env is not None:
-                    query.append(PityDatabase.env == env)
-                result = await session.execute(select(PityDatabase).where(*query))
+                    query.append(Database.env == env)
+                result = await session.execute(select(Database).where(*query))
                 return result.scalars().all()
         except Exception as e:
             DbConfigDao.log.error(f"获取数据库配置失败, error: {e}")
@@ -50,12 +50,12 @@ class DbConfigDao(Mapper):
             async with async_session() as session:
                 async with session.begin():
                     result = await session.execute(
-                        select(PityDatabase).where(PityDatabase.name == data.name, PityDatabase.deleted_at == 0,
-                                                   PityDatabase.env == data.env))
+                        select(Database).where(Database.name == data.name, Database.deleted_at == 0,
+                                               Database.env == data.env))
                     query = result.scalars().first()
                     if query is not None:
                         raise Exception("数据库配置已存在")
-                    session.add(PityDatabase(**data.dict(), user=user))
+                    session.add(Database(**data.dict(), user=user))
         except Exception as e:
             DbConfigDao.log.error(f"新增数据库配置: {data.name}失败, {e}")
             raise Exception("新增数据库配置失败")
@@ -66,7 +66,7 @@ class DbConfigDao(Mapper):
         try:
             async with async_session() as session:
                 async with session.begin():
-                    result = await session.execute(select(PityDatabase).where(data.id == PityDatabase.id))
+                    result = await session.execute(select(Database).where(data.id == Database.id))
                     query = result.scalars().first()
                     if query is None:
                         raise Exception("数据库配置不存在")
@@ -83,7 +83,7 @@ class DbConfigDao(Mapper):
             async with async_session() as session:
                 async with session.begin():
                     result = await session.execute(
-                        select(PityDatabase).where(id == PityDatabase.id, PityDatabase.deleted_at == 0))
+                        select(Database).where(id == Database.id, Database.deleted_at == 0))
                     query = result.scalars().first()
                     if query is None:
                         raise Exception("数据库配置不存在或已删除")
@@ -98,7 +98,7 @@ class DbConfigDao(Mapper):
         try:
             async with async_session() as session:
                 result = await session.execute(
-                    select(PityDatabase).where(PityDatabase.id == id, PityDatabase.deleted_at == 0))
+                    select(Database).where(Database.id == id, Database.deleted_at == 0))
                 return result.scalars().first()
         except Exception as e:
             DbConfigDao.log.error(f"获取数据库配置失败, error: {e}")
@@ -109,8 +109,8 @@ class DbConfigDao(Mapper):
         try:
             async with async_session() as session:
                 result = await session.execute(
-                    select(PityDatabase).where(PityDatabase.env == env, PityDatabase.name == name,
-                                               PityDatabase.deleted_at == 0))
+                    select(Database).where(Database.env == env, Database.name == name,
+                                           Database.deleted_at == 0))
                 return result.scalars().first()
         except Exception as e:
             DbConfigDao.log.error(f"获取数据库配置失败, error: {e}")
@@ -131,7 +131,7 @@ class DbConfigDao(Mapper):
             env_map = {env.id: env.name for env in env_data}
             # 获取数据库相关的信息
             async with async_session() as session:
-                query = await session.execute(select(PityDatabase).where(PityDatabase.deleted_at == 0))
+                query = await session.execute(select(Database).where(Database.deleted_at == 0))
                 data = query.scalars().all()
                 for d in data:
                     name = env_map[d.env]
@@ -230,13 +230,13 @@ class DbConfigDao(Mapper):
                                                   query.password,
                                                   query.database)
             result, _ = await DbConfigDao.execute(data, sql)
-            _, result = PityResponse.parse_sql_result(result)
+            _, result = AtsResponse.parse_sql_result(result)
             return json.dumps(result, cls=JsonEncoder, ensure_ascii=False)
         except Exception as e:
             DbConfigDao.log.error(f"查询数据库配置失败, error: {e}")
             raise Exception(f"执行SQL失败: {e}")
 
 
-@ModelWrapper(PitySQLHistory)
-class PitySQLHistoryDao(Mapper):
+@ModelWrapper(SQLHistory)
+class SQLHistoryDao(Mapper):
     pass

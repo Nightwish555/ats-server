@@ -4,7 +4,7 @@ import json
 import requests
 
 
-class Request(object):
+class Request:
 
     def __init__(self, url, session=False, **kwargs):
         self.url = url
