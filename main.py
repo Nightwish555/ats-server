@@ -65,44 +65,6 @@ ats.include_router(msg_router, dependencies=[Depends(request_info)])
 ats.include_router(workspace_router, dependencies=[Depends(request_info)])
 
 
-ats.mount("/statics", StaticFiles(directory="statics"), name="statics")
-
-templates = Jinja2Templates(directory="statics")
-
-
-@ats.get("/")
-async def serve_spa(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-
-@ats.get("/{filename}")
-async def get_site(filename):
-    filename = './statics/' + filename
-
-    if not isfile(filename):
-        return Response(status_code=404)
-
-    with open(filename, mode='rb') as f:
-        content = f.read()
-
-    content_type, _ = guess_type(filename)
-    return Response(content, media_type=content_type)
-
-
-@ats.get("/static/{filename}")
-async def get_site_static(filename):
-    filename = './statics/static/' + filename
-
-    if not isfile(filename):
-        return Response(status_code=404)
-
-    with open(filename, mode='rb') as f:
-        content = f.read()
-
-    content_type, _ = guess_type(filename)
-    return Response(content, media_type=content_type)
-
-
 @ats.on_event('startup')
 async def init_redis():
     """
