@@ -28,7 +28,7 @@ class AtsResponse:
         return data
 
     @staticmethod
-    def dict_model_to_dict(obj):
+    def dict_model_to_dict(obj: Any):
         for k, v in obj.items():
             if isinstance(v, dict):
                 AtsResponse.dict_model_to_dict(v)
@@ -39,7 +39,7 @@ class AtsResponse:
         return obj
 
     @staticmethod
-    def json_serialize(obj):
+    def json_serialize(obj: Any):
         ans = dict()
         for k, o in dict(obj).items():
             if isinstance(o, set):
@@ -72,26 +72,22 @@ class AtsResponse:
         })
 
     @staticmethod
-    def success(data=None, code=0, msg="操作成功", exclude=()):
-        return AtsResponse.encode_json(dict(code=code, msg=msg, data=data), *exclude)
+    def success(data: Any = None, code: int = 200, message: str = "操作成功"):
+        return dict(code=code, message=message, data=data, success=True)
 
     @staticmethod
-    def records(data: list, code=0, msg="操作成功"):
-        return dict(code=code, msg=msg, data=AtsResponse.model_to_list(data))
+    def failed(message: Any, code: int = 400, data: Any = None):
+        return dict(code=code, message=message, success=False, data=data)
 
     @staticmethod
-    def success_with_size(data=None, code=0, msg="操作成功", total=0):
+    def success_with_size(data: Any = None, code: int = 201, msg: str = "操作成功", total: int = 0):
         if data is None:
             return AtsResponse.encode_json(dict(code=code, msg=msg, data=list(), total=0))
         return AtsResponse.encode_json(dict(code=code, msg=msg, data=data, total=total))
 
     @staticmethod
-    def failed(msg, code=110, data=None):
-        return dict(code=code, msg=str(msg), data=data)
-
-    @staticmethod
     def forbidden():
-        return dict(code=403, msg="对不起, 你没有权限")
+        return dict(code=403, success=False, msg="对不起, 你没有权限")
 
     @staticmethod
     def file(filepath, filename):

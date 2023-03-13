@@ -83,7 +83,7 @@ async def run_test_plan(id: int, user_info=Depends(Permission(Config.MEMBER))):
 async def follow_test_plan(id: int, user_info=Depends(Permission(Config.MEMBER))):
     try:
         await TestPlanDao.follow_test_plan(id, user_info['id'])
-        return AtsResponse.success(msg="关注成功")
+        return AtsResponse.success(message="关注成功")
     except Exception as e:
         return AtsResponse.failed(str(e))
 

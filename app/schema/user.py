@@ -19,9 +19,9 @@ class UserUpdateForm(BaseModel):
 
 
 class UserDto(BaseModel):
+    username: str
     name: str
     password: str
-    username: str
     email: str
 
     @validator('name', 'password', 'username', 'email')

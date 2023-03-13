@@ -28,3 +28,4 @@ python-multipart
 redlock
 PyYAML
 uvicorn[standard]~=0.17.6
+alembic

@@ -6,6 +6,9 @@ from os.path import isfile
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import Request, WebSocket, WebSocketDisconnect, Depends
+from starlette.responses import Response
+from starlette.staticfiles import StaticFiles
+from starlette.templating import Jinja2Templates
 
 from app import ats, init_logging
 from app.core.msg.wss_msg import WebSocketMessage
@@ -60,6 +63,44 @@ ats.include_router(oss_router, dependencies=[Depends(request_info)])
 ats.include_router(operation_router, dependencies=[Depends(request_info)])
 ats.include_router(msg_router, dependencies=[Depends(request_info)])
 ats.include_router(workspace_router, dependencies=[Depends(request_info)])
+
+
+ats.mount("/statics", StaticFiles(directory="statics"), name="statics")
+
+templates = Jinja2Templates(directory="statics")
+
+
+@ats.get("/")
+async def serve_spa(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
+@ats.get("/{filename}")
+async def get_site(filename):
+    filename = './statics/' + filename
+
+    if not isfile(filename):
+        return Response(status_code=404)
+
+    with open(filename, mode='rb') as f:
+        content = f.read()
+
+    content_type, _ = guess_type(filename)
+    return Response(content, media_type=content_type)
+
+
+@ats.get("/static/{filename}")
+async def get_site_static(filename):
+    filename = './statics/static/' + filename
+
+    if not isfile(filename):
+        return Response(status_code=404)
+
+    with open(filename, mode='rb') as f:
+        content = f.read()
+
+    content_type, _ = guess_type(filename)
+    return Response(content, media_type=content_type)
 
 
 @ats.on_event('startup')
