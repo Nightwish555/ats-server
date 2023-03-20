@@ -80,10 +80,12 @@ class AtsResponse:
         return dict(code=code, message=message, success=False, data=data)
 
     @staticmethod
-    def success_with_size(data: Any = None, code: int = 201, msg: str = "操作成功", total: int = 0):
+    def success_with_size(data: Any = None, code: int = 201, message: str = "操作成功", total: int = 0):
         if data is None:
-            return AtsResponse.encode_json(dict(code=code, msg=msg, data=list(), total=0))
-        return AtsResponse.encode_json(dict(code=code, msg=msg, data=data, total=total))
+            return AtsResponse.encode_json(
+                dict(code=code, message=message, data={'data': data, 'total': total}, success=True))
+        return AtsResponse.encode_json(
+            dict(code=code, message=message, data={'data': data, 'total': total}, success=True))
 
     @staticmethod
     def forbidden():

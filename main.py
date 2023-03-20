@@ -9,6 +9,8 @@ from fastapi import Request, WebSocket, WebSocketDisconnect, Depends
 from starlette.responses import Response
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
+from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.errors import ServerErrorMiddleware
 
 from app import ats, init_logging
 from app.core.msg.wss_msg import WebSocketMessage
@@ -40,6 +42,7 @@ async def request_info(request: Request):
     logger.bind(name=None).debug(f"{request.method} {request.url}")
     try:
         body = await request.json()
+        logger.info(request.headers)
         logger.bind(payload=body, name=None).debug("request_json: ")
     except:
         try:
@@ -50,6 +53,13 @@ async def request_info(request: Request):
         except:
             # 忽略文件上传类型的数据
             pass
+
+
+async def global_execution_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content=dict(code=110, msg="unknown error: " + str(exc)),
+    )
 
 
 # 注册路由
@@ -63,6 +73,20 @@ ats.include_router(oss_router, dependencies=[Depends(request_info)])
 ats.include_router(operation_router, dependencies=[Depends(request_info)])
 ats.include_router(msg_router, dependencies=[Depends(request_info)])
 ats.include_router(workspace_router, dependencies=[Depends(request_info)])
+
+# add global error
+ats.add_middleware(
+    ServerErrorMiddleware,
+    handler=global_execution_handler,
+)
+# add cors
+ats.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @ats.on_event('startup')

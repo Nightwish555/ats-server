@@ -82,7 +82,7 @@ async def query_project(projectId: int, user_info=Depends(Permission(Config.MEMB
             await ProjectDao.delete_record_by_id(session, user_info['id'], projectId, session_begin=True)
             # 有可能项目没有测试计划 2022-03-14 fixed bug
             await TestPlanDao.delete_record_by_id(session, user_info['id'], projectId, key="project_id",
-                                                      exists=False, session_begin=True)
+                                                  exists=False, session_begin=True)
         return AtsResponse.success()
     except Exception as e:
         return AtsResponse.failed(e)

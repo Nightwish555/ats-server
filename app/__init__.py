@@ -10,8 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from loguru import logger
 from loguru._defaults import LOGURU_FORMAT
-from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.errors import ServerErrorMiddleware
+
 from starlette.types import Message
 
 from app.exception.request import AuthException
@@ -112,26 +111,7 @@ async def unexpected_exception_error(request: Request, exc: AuthException):
     )
 
 
-async def global_execution_handler(request: Request, exc: Exception):
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=dict(code=110, msg="unknown error: " + str(exc)),
-    )
 
-
-# add global error
-ats.add_middleware(
-    ServerErrorMiddleware,
-    handler=global_execution_handler,
-)
-# add cors
-ats.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 class InterceptHandler(logging.Handler):

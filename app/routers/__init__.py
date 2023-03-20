@@ -1,3 +1,4 @@
+import loguru
 from fastapi import Header
 from starlette import status
 
